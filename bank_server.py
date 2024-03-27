@@ -1,43 +1,84 @@
 import socket
 import threading
 import logging
+from enconding import *
+import base64
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
+sharedKey = 'harkiratJASDEEPnavjeev'
 user_credentials = {}
 user_balances = {}
 
+def authenticate_connection(conn):
+    bankNonce = os.urandom(16)  
+
+    atmNonce = conn.recv(4096)
+    atmNonce = customDecrypt(base64.b64decode(atmNonce), sharedKey)
+
+    returnMessage = bankNonce + b'||' + atmNonce
+    returnMessage = customEncrypt(returnMessage, key=sharedKey)
+    conn.sendall(base64.b64encode(returnMessage))
+
+
+    recievedNonce = conn.recv(4096)
+    recievedNonce = customDecrypt(base64.b64decode(recievedNonce), sharedKey)
+
+    if recievedNonce == bankNonce:
+        logging.info("Bank Has Authenticated Customer")
+
+        masterKey1 = conn.recv(4096)
+        masterKey1 = customDecrypt(base64.b64decode(masterKey1), sharedKey)
+        logging.info(f"Master Key Recieved: {masterKey1}")
+        return True
+
+    return False 
+
 def handle_client(conn, address):
     logging.info(f"Connection from: {address}")
+    if not authenticate_connection(conn):
+        conn.close()
+        logging.info(f"Failed to authenticate connection with {address}. Connection closed.")
+        return
+    
     try:
-        data = conn.recv(4096).decode()
-        parts = data.split('||')
-        if len(parts) < 2:
-            logging.error("Invalid message format received.")
-            conn.send(b"Invalid message format.")
-            return
+        while True:
+            data = conn.recv(4096).decode()
+            if not data:
+                break  # Client has disconnected
+            
+            parts = data.split('||')
+            if len(parts) < 2:
+                logging.error("Invalid message format received.")
+                conn.send(b"Invalid message format.")
+                continue  # Continue listening for next command
+            
+            action = parts[0]
+            username = parts[1]
 
-        action, username = parts[0], parts[1]
-        if action == "register":
-            password = parts[2]
-            handle_registration(conn, username, password)
-            user_balances[username] = 0
-        elif action == "login":
-            password = parts[2]
-            handle_login(conn, username, password)
-        elif action == "deposit":
-            amount = float(parts[2])
-            success, message = handle_deposit(username, amount)
-            conn.send(message.encode())
-        elif action == "withdraw":
-            amount = float(parts[2])
-            success, message = handle_withdrawal(username, amount)
-            conn.send(message.encode())
-        elif action == "balance":
-            success, message = handle_balance_inquiry(username)
-            conn.send(message.encode())
-        else:
-            logging.warning(f"Unknown action received: {action}")
+            if action == "logout":
+                logging.info(f"User {username} logged out.")
+                break  
+            
+            if action == "register":
+                password = parts[2]
+                handle_registration(conn, username, password)
+                user_balances[username] = 0
+            elif action == "login":
+                password = parts[2]
+                handle_login(conn, username, password)
+            elif action == "deposit":
+                amount = float(parts[2])
+                handle_deposit(conn, username, amount)
+            elif action == "withdraw":
+                amount = float(parts[2])
+                handle_withdrawal(conn, username, amount)
+            elif action == "balance":
+                handle_balance_inquiry(conn, username)
+            else:
+                logging.warning(f"Unknown action received: {action}")
+    except Exception as e:
+        logging.error(f"Error handling client {address}: {e}")
     finally:
         conn.close()
         logging.info(f"Connection with {address} closed.")
@@ -83,6 +124,9 @@ def server():
         server_socket.bind((host, port))
         server_socket.listen()
         logging.info(f"Server listening on {host}:{port}")
+
+
+
         while True:
             conn, address = server_socket.accept()
             client_thread = threading.Thread(target=handle_client, args=(conn, address))

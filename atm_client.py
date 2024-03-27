@@ -1,12 +1,20 @@
 import tkinter as tk
 from tkinter import messagebox
 import socket
+import os
+import base64
+from enconding import *
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 class ClientApp:
     def __init__(self, master):
+        self.sharedKey = 'harkiratJASDEEPnavjeev'
         self.master = master
+        self.bankSock = self.connect()
         self.master.title("Client Registration/Login")
-
         self.action_var = tk.StringVar(value="login")
 
         self.username_label = tk.Label(master, text="Username:")
@@ -69,19 +77,48 @@ class ClientApp:
         amount = self.amount_entry.get() if action in ["deposit", "withdraw"] else "0"
         self.communicate_with_server(action, self.logged_in_user, amount)
 
+    def connect(self):
+        try:
+            bankSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            bankSock.connect(('localhost', 5555))
+            atmNonce = os.urandom(16)  
+            encryptedNonce = customEncrypt(atmNonce, key=self.sharedKey)
+            bankSock.send(base64.b64encode(encryptedNonce))
+
+            bankMessage = bankSock.recv(4096)
+            bankMessage = base64.b64decode(bankMessage)
+            bankMessage = customDecrypt(bankMessage, key=self.sharedKey)
+            bankNonce = bankMessage.split(b'||')[0]
+            recievedNonce = bankMessage.split(b'||')[1]
+
+            if recievedNonce == atmNonce:
+                logging.info("Customer Has Authenticated Bank")
+                encryptedNonce = customEncrypt(bankNonce, key=self.sharedKey)
+                bankSock.send(base64.b64encode(encryptedNonce))
+
+                self.masterKey = createMasterKey()
+                masterKey = customEncrypt(self.masterKey, key=self.sharedKey)
+                bankSock.send(base64.b64encode(masterKey))
+                logging.info(f"Shared Master Key to Bank: {self.masterKey}")
+                
+            return bankSock
+        except Exception as e:
+            messagebox.showerror("Connection Error", str(e))
+            return None
 
     def communicate_with_server(self, action, username, password_or_amount):
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                sock.connect(('localhost', 5555))
+        if self.bankSock:
+            try:
                 message = f"{action}||{username}||{password_or_amount}"
-                sock.sendall(message.encode())
-                response = sock.recv(1024).decode()
+                self.bankSock.sendall(message.encode())
+                response = self.bankSock.recv(1024).decode()
                 messagebox.showinfo("Response", response)
                 if action == "login" and "successful" in response:
                     self.on_login_success(username)
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+        else:
+            messagebox.showerror("Connection Error", "Not connected to the server.")
 
 
 def main():
