@@ -1,60 +1,92 @@
 import socket
 import threading
-def handle_client(client_socket):
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+user_credentials = {}
+user_balances = {}
+
+def handle_client(conn, address):
+    logging.info(f"Connection from: {address}")
     try:
-        # Receive username
-        username = ""
-        while True:
-            char = client_socket.recv(1).decode('utf-8')
-            if char == '\n':
-                break
-            username += char
-        print(f"Username received: {username}")
+        data = conn.recv(4096).decode()
+        parts = data.split('||')
+        if len(parts) < 2:
+            logging.error("Invalid message format received.")
+            conn.send(b"Invalid message format.")
+            return
 
-        # Receive password
-        password = ""
-        while True:
-            char = client_socket.recv(1).decode('utf-8')
-            if char == '\n':
-                break
-            password += char
-        print(f"Password received: {password}")
-
-        # Send a response to acknowledge login
-        client_socket.send(b"Logged in successfully")
-
-        while True:
-            # Process commands as before
-            command = client_socket.recv(1024).decode('utf-8').split()
-            if not command or command[0] == "QUIT":
-                break  # Quit if no command or QUIT command received
-
-            if command[0] == "BALANCE":
-                client_socket.send(b"Balance feature not yet implemented")
-            elif command[0] == "DEPOSIT":
-                client_socket.send(b"Deposit feature not yet implemented")
-            elif command[0] == "WITHDRAW":
-                client_socket.send(b"Withdrawal feature not yet implemented")
-            else:
-                client_socket.send(b"Invalid command")
+        action, username = parts[0], parts[1]
+        if action == "register":
+            password = parts[2]
+            handle_registration(conn, username, password)
+            user_balances[username] = 0
+        elif action == "login":
+            password = parts[2]
+            handle_login(conn, username, password)
+        elif action == "deposit":
+            amount = float(parts[2])
+            success, message = handle_deposit(username, amount)
+            conn.send(message.encode())
+        elif action == "withdraw":
+            amount = float(parts[2])
+            success, message = handle_withdrawal(username, amount)
+            conn.send(message.encode())
+        elif action == "balance":
+            success, message = handle_balance_inquiry(username)
+            conn.send(message.encode())
+        else:
+            logging.warning(f"Unknown action received: {action}")
     finally:
-        client_socket.close()
+        conn.close()
+        logging.info(f"Connection with {address} closed.")
 
+def handle_registration(conn, username, password):
+    if username in user_credentials:
+        conn.send(b"Username already exists.")
+        logging.warning(f"Registration attempt with existing username: {username}")
+    else:
+        user_credentials[username] = password
+        conn.send(b"Registration successful.")
+        logging.info(f"New user registered: {username}")
 
-def start_server():
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(('localhost', 9237))
-    server.listen(5)
-    print("Server listening on localhost")
-    try:
+def handle_login(conn, username, password):
+    if username in user_credentials and user_credentials[username] == password:
+        conn.send(b"Login successful.")
+        logging.info(f"User logged in: {username}")
+    else:
+        conn.send(b"Login failed.")
+        logging.warning(f"Failed login attempt for username: {username}")
+
+def handle_deposit(username, amount):
+    if username in user_balances:
+        user_balances[username] += amount
+        return True, "Deposit successful."
+    return False, "User not found."
+
+def handle_withdrawal(username, amount):
+    if username in user_balances and user_balances[username] >= amount:
+        user_balances[username] -= amount
+        return True, "Withdrawal successful."
+    return False, "Insufficient funds or user not found."
+
+def handle_balance_inquiry(username):
+    if username in user_balances:
+        return True, f"Current balance: {user_balances[username]}"
+    return False, "User not found."
+
+def server():
+    host = 'localhost'
+    port = 5555
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+        server_socket.bind((host, port))
+        server_socket.listen()
+        logging.info(f"Server listening on {host}:{port}")
         while True:
-            client_sock, address = server.accept()
-            print(f"Accepted connection from {address}")
-            client_handler = threading.Thread(target=handle_client, args=(client_sock,))
-            client_handler.start()
-    finally:
-        server.close()
+            conn, address = server_socket.accept()
+            client_thread = threading.Thread(target=handle_client, args=(conn, address))
+            client_thread.start()
 
-
-if __name__ == "__main__":
-    start_server()
+if __name__ == '__main__':
+    server()

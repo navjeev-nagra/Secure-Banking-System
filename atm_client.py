@@ -1,30 +1,93 @@
+import tkinter as tk
+from tkinter import messagebox
 import socket
 
+class ClientApp:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Client Registration/Login")
 
-def connect_to_server():
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(('localhost', 9237))
+        self.action_var = tk.StringVar(value="login")
 
-    # Simulate user login
-    username = input("Enter username: ")
-    password = input("Enter password: ")
-    client.send((username + '\n').encode('utf-8'))  # Append '\n' as delimiter
-    client.send((password + '\n').encode('utf-8'))  # Append '\n' as delimiter
-    response = client.recv(4096)
-    print(f"Server response: {response.decode('utf-8')}")
+        self.username_label = tk.Label(master, text="Username:")
+        self.username_entry = tk.Entry(master)
+
+        self.password_label = tk.Label(master, text="Password:")
+        self.password_entry = tk.Entry(master, show="*")
+
+        self.action_login = tk.Radiobutton(master, text="Login", variable=self.action_var, value="login")
+        self.action_register = tk.Radiobutton(master, text="Register", variable=self.action_var, value="register")
+
+        self.submit_button = tk.Button(master, text="Submit", command=self.submit_action)
+        self.reset_button = tk.Button(master, text="Reset", command=self.reset_form)  # Reset button
+
+        self.username_label.grid(row=0, column=0)
+        self.username_entry.grid(row=0, column=1)
+        self.password_label.grid(row=1, column=0)
+        self.password_entry.grid(row=1, column=1)
+        self.action_login.grid(row=2, column=0)
+        self.action_register.grid(row=2, column=1)
+        self.submit_button.grid(row=3, column=0)
+        self.reset_button.grid(row=3, column=1) 
+
+    def submit_action(self):
+        action = self.action_var.get()
+        username = self.username_entry.get()
+        password = self.password_entry.get()
+        self.communicate_with_server(action, username, password)
+
+    def reset_form(self):
+        self.username_entry.delete(0, tk.END)
+        self.password_entry.delete(0, tk.END)
+        self.submit_button['state'] = tk.NORMAL
+
+    def clear_gui(self):
+        for widget in self.master.winfo_children():
+            widget.destroy()
+
+    def on_login_success(self, username):
+        self.logged_in_user = username
+        self.clear_gui()
+        self.show_transaction_ui()
+
+    def show_transaction_ui(self):
+        tk.Label(self.master, text=f"Logged in as {self.logged_in_user}").pack()
+
+        self.action_var = tk.StringVar(value="deposit")  
+
+        tk.Radiobutton(self.master, text="Deposit", variable=self.action_var, value="deposit").pack()
+        tk.Radiobutton(self.master, text="Withdraw", variable=self.action_var, value="withdraw").pack()
+        tk.Radiobutton(self.master, text="Balance Inquiry", variable=self.action_var, value="balance").pack()
+
+        self.amount_entry = tk.Entry(self.master)
+        self.amount_entry.pack()
+
+        tk.Button(self.master, text="Submit", command=self.perform_transaction).pack()
+
+    def perform_transaction(self):
+        action = self.action_var.get()
+        amount = self.amount_entry.get() if action in ["deposit", "withdraw"] else "0"
+        self.communicate_with_server(action, self.logged_in_user, amount)
 
 
-    # Simulate user actions
-    while True:
-        action = input("Enter action (BALANCE, DEPOSIT <amount>, WITHDRAW <amount>, or QUIT): ")
-        client.send(action.encode('utf-8'))
-        if action == "QUIT":
-            break
-        response = client.recv(4096)
-        print(f"Server response: {response.decode('utf-8')}")
+    def communicate_with_server(self, action, username, password_or_amount):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.connect(('localhost', 5555))
+                message = f"{action}||{username}||{password_or_amount}"
+                sock.sendall(message.encode())
+                response = sock.recv(1024).decode()
+                messagebox.showinfo("Response", response)
+                if action == "login" and "successful" in response:
+                    self.on_login_success(username)
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
 
-    client.close()
 
+def main():
+    root = tk.Tk()
+    app = ClientApp(root)
+    root.mainloop()
 
 if __name__ == "__main__":
-    connect_to_server()
+    main()
