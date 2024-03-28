@@ -100,6 +100,9 @@ class ClientApp:
                 masterKey = customEncrypt(self.masterKey, key=self.sharedKey)
                 bankSock.send(base64.b64encode(masterKey))
                 logging.info(f"Shared Master Key to Bank: {self.masterKey}")
+
+                # Derive encryption and MAC keys from the Master Secret
+                self.encryption_key, self.mac_key = derive_keys(self.masterKey) # Returns two 16-byte keys
                 
             return bankSock
         except Exception as e:

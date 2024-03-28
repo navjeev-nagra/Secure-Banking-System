@@ -30,7 +30,10 @@ def authenticate_connection(conn):
         masterKey1 = conn.recv(4096)
         masterKey1 = customDecrypt(base64.b64decode(masterKey1), sharedKey)
         logging.info(f"Master Key Recieved: {masterKey1}")
-        return True
+        # Derive encryption and MAC keys from the Master Secret
+        encryption_key, mac_key = derive_keys(masterKey1)
+
+        return encryption_key, mac_key  # Return derived keys for use in the session
 
     return False 
 

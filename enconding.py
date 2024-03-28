@@ -1,10 +1,13 @@
 import socket
 
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
-from Crypto.Cipher import PKCS1_OAEP
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad, unpad
+#from Crypto.Cipher import PKCS1_OAEP
+#from Crypto.PublicKey import RSA
+#from Crypto.Cipher import AES
+#from Crypto.Util.Padding import pad, unpad
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.backends import default_backend
 import os
 
 def customEncrypt(message, key):
@@ -38,6 +41,23 @@ def customDecrypt(message, key):
     
     return message
 
+def derive_keys(master_key):
+    backend = default_backend()
+    hkdf = HKDF(
+        algorithm=hashes.SHA256(),
+        length=32,  # Generates 32 bytes: 16 for encryption, 16 for MAC
+        salt=None,
+        info=b'handshake data',
+        backend=backend
+    )
+
+    derived_key = hkdf.derive(master_key)
+
+    # Split the derived key into two parts: one for encryption, one for MAC
+    encryption_key = derived_key[:16]
+    mac_key = derived_key[16:]
+
+    return encryption_key, mac_key
 
 def createMasterKey():
     return os.urandom(16)  
