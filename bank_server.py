@@ -5,7 +5,7 @@ from enconding import *
 import base64
 import binascii
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='server.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 sharedKey = bytearray(b'harkiratJASDEEPnavjeev')
 user_credentials = {}
 user_balances = {}
