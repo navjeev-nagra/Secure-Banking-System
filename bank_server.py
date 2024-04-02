@@ -77,7 +77,7 @@ def handle_client(conn, address):
                 amount = float(parts[2])
                 handle_withdrawal(conn, username, amount)
             elif action == "balance":
-                handle_balance_inquiry(conn, username)
+                handle_balance_inquiry(conn, username, amount)
             else:
                 logging.warning(f"Unknown action received: {action}")
     except Exception as e:
@@ -103,22 +103,32 @@ def handle_login(conn, username, password):
         conn.send(b"Login failed.")
         logging.warning(f"Failed login attempt for username: {username}")
 
-def handle_deposit(username, amount):
+def handle_deposit(conn, username, amount):
     if username in user_balances:
         user_balances[username] += amount
-        return True, "Deposit successful."
-    return False, "User not found."
+        conn.send(b"Deposit successful.")
+        logging.info(f"{username} deposited ${amount}")
+    else:
+        conn.send(b"Deposit failed.")
+        logging.warning(f"Failed deposit attempt for username: {username}")
 
-def handle_withdrawal(username, amount):
+def handle_withdrawal(conn, username, amount):
     if username in user_balances and user_balances[username] >= amount:
         user_balances[username] -= amount
-        return True, "Withdrawal successful."
-    return False, "Insufficient funds or user not found."
+        conn.send(b"Withdrawal successful.")
+        logging.info(f"{username} withdrew ${amount}")
+    else:
+        conn.send(b"Withdrawal failed.")
+        logging.warning(f"Failed withdrawal attempt for username: {username}")
 
-def handle_balance_inquiry(username):
+def handle_balance_inquiry(conn,username,amount):
     if username in user_balances:
-        return True, f"Current balance: {user_balances[username]}"
-    return False, "User not found."
+        response = f"Current balance: ${user_balances[username]}"
+        conn.send(response.encode())
+        logging.info(f"Current balance for {username}: ${user_balances[username]}")
+    else:
+        conn.send(b"Balance inquiry failed.")
+        logging.warning(f"Failed balance inquiry attempt for username: {username}")
 
 def server():
     host = 'localhost'

@@ -74,8 +74,9 @@ class ClientApp:
 
     def perform_transaction(self):
         action = self.action_var.get()
-        amount = self.amount_entry.get() if action in ["deposit", "withdraw"] else "0"
+        amount = self.amount_entry.get()
         self.communicate_with_server(action, self.logged_in_user, amount)
+        self.amount_entry.delete(0, tk.END)
 
     def connect(self):
         try:
