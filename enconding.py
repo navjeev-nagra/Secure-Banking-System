@@ -5,41 +5,66 @@ from cryptography.hazmat.primitives.serialization import load_pem_public_key
 #from Crypto.PublicKey import RSA
 #from Crypto.Cipher import AES
 #from Crypto.Util.Padding import pad, unpad
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, hmac
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
+from Crypto.Random import get_random_bytes
+import base64
 import os
 
-def customEncrypt(message, key):
-    # message_ascii = [ord(c) for c in message]
-    # key_ascii = [ord(c) for c in key]
-    
-    # encrypted_message = []
-    # key_length = len(key_ascii)
-    
-    # message_ascii.reverse()
-    
-    # for i in range(len(message_ascii)):
-    #     encrypted_value = message_ascii[i] * key_ascii[i % key_length]
-    #     encrypted_message.append(encrypted_value)
-        
+def customEncrypt(message, encryption_key):
+    message_bytes = message.encode()
+    encrypted_message = bytearray()
+    key_integer = int.from_bytes(encryption_key, byteorder='big') % 256
+    for byte in message_bytes:
+        encrypted_byte = byte ^ key_integer
+        encrypted_message.append(encrypted_byte)
+
+    return bytes(encrypted_message)
+
+def customDecrypt(encrypted_message, encryption_key):
+    decrypted_message_bytes = bytearray()
+    key_integer = int.from_bytes(encryption_key, byteorder='big') % 256
+    for byte in encrypted_message:
+        decrypted_byte = byte ^ key_integer
+        decrypted_message_bytes.append(decrypted_byte)
+    decrypted_message = decrypted_message_bytes.decode()
+
+    return decrypted_message
+
+def simpleEncrypt(message, key):
+    encrypted = bytearray()
+    key_index = 0
+    for char in message:
+        encrypted_char = char ^ key[key_index]
+        encrypted.append(encrypted_char)
+        key_index = (key_index + 1) % len(key)
     return message
 
-def customDecrypt(message, key):
-    # key_ascii = [ord(c) for c in key]
-    
-    # decrypted_message_ascii = []
-    # key_length = len(key_ascii)
-    
-    # for i in range(len(encrypted_data)):
-    #     decrypted_value = encrypted_data[i] // key_ascii[i % key_length]
-    #     decrypted_message_ascii.append(decrypted_value)
-    
-    # decrypted_message_ascii.reverse()
-    
-    # decrypted_message = ''.join(chr(c) for c in decrypted_message_ascii)
-    
+def simpleDecrypt(message, key):
+    decrypted = bytearray()
+    key_index = 0
+    for char in message:
+        decrypted_char = char ^ key[key_index]
+        decrypted.append(decrypted_char)
+        key_index = (key_index + 1) % len(key)
     return message
+
+def generate_mac(data, mac_key):
+    h = hmac.HMAC(mac_key, hashes.SHA256(), backend=default_backend())
+    h.update(data)
+    return base64.b64encode(h.finalize())
+
+def verify_mac(data, mac_key, received_mac):
+    h = hmac.HMAC(mac_key, hashes.SHA256(), backend=default_backend())
+    h.update(data)
+    try:
+        h.verify(base64.b64decode(received_mac))
+        return True
+    except Exception as e:
+        return False
 
 def derive_keys(master_key):
     backend = default_backend()
