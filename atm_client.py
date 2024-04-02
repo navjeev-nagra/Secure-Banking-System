@@ -12,10 +12,12 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 class ClientApp:
     def __init__(self, master):
+        background_color = "#add8e6"
         self.sharedKey = 'harkiratJASDEEPnavjeev'
         self.master = master
         self.bankSock = self.connect()
         self.master.title("Client Registration/Login")
+        self.master.configure(bg=background_color)
         self.action_var = tk.StringVar(value="login")
 
         self.username_label = tk.Label(master, text="Username:")
