@@ -4,7 +4,7 @@ from PIL import Image, ImageTk
 import socket
 import os
 import base64
-from enconding import *
+from encryption import *
 import logging
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

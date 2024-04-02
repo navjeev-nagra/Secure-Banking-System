@@ -1,7 +1,7 @@
 import socket
 import threading
 import logging
-from enconding import *
+from encryption import *
 import base64
 import binascii
 
