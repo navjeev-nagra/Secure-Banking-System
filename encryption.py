@@ -34,23 +34,15 @@ def customDecrypt(encrypted_message, encryption_key):
 
     return decrypted_message
 
-def simpleEncrypt(message, key):
-    encrypted = bytearray()
-    key_index = 0
-    for char in message:
-        encrypted_char = char ^ key[key_index]
-        encrypted.append(encrypted_char)
-        key_index = (key_index + 1) % len(key)
-    return message
-
-def simpleDecrypt(message, key):
-    decrypted = bytearray()
-    key_index = 0
-    for char in message:
-        decrypted_char = char ^ key[key_index]
-        decrypted.append(decrypted_char)
-        key_index = (key_index + 1) % len(key)
-    return message
+def caesar_cipher(text, shift):
+    result = ""
+    for char in text:
+        if char.isalpha():
+            offset = 65 if char.isupper() else 97
+            result += chr((ord(char) - offset + shift) % 26 + offset)
+        else:
+            result += char
+    return result
 
 def generate_mac(data, mac_key):
     h = hmac.HMAC(mac_key, hashes.SHA256(), backend=default_backend())
@@ -86,12 +78,27 @@ def derive_keys(master_key):
 def createMasterKey():
     return os.urandom(16)
 
-def caesar_cipher(text, shift):
-    result = ""
-    for char in text:
-        if char.isalpha():
-            offset = 65 if char.isupper() else 97
-            result += chr((ord(char) - offset + shift) % 26 + offset)
-        else:
-            result += char
-    return result
+
+
+
+
+
+
+
+def simpleEncrypt(message, key):
+    encrypted = bytearray()
+    key_index = 0
+    for char in message:
+        encrypted_char = char ^ key[key_index]
+        encrypted.append(encrypted_char)
+        key_index = (key_index + 1) % len(key)
+    return message
+
+def simpleDecrypt(message, key):
+    decrypted = bytearray()
+    key_index = 0
+    for char in message:
+        decrypted_char = char ^ key[key_index]
+        decrypted.append(decrypted_char)
+        key_index = (key_index + 1) % len(key)
+    return message

@@ -53,7 +53,7 @@ def authenticate_connection(conn):
         return False
 
     if receivedNonce == bankNonce:
-        logging.info("Bank has authenticated the customer")
+        print("Bank has authenticated the customer")
 
         masterKey1 = conn.recv(4096)
         if not masterKey1:
@@ -65,8 +65,6 @@ def authenticate_connection(conn):
         except Exception as e:
             logging.error(f"Error decrypting master key: {e}")
             return False
-
-        logging.info(f"Master Key Received: {masterKey1}")
 
         encryption_key, mac_key = derive_keys(masterKey1)
 
@@ -216,7 +214,7 @@ def server():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
         server_socket.bind((host, port))
         server_socket.listen()
-        logging.info(f"Server listening on {host}:{port}")
+        print(f"Server listening on {host}:{port}")
         while True:
             conn, address = server_socket.accept()
             client_thread = threading.Thread(target=handle_client, args=(conn, address))

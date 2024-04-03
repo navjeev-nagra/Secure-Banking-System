@@ -1,14 +1,23 @@
-
-2024-04-03 01:46:33,621 - INFO - Server listening on localhost:5555
-2024-04-03 01:46:36,077 - INFO - Connection from: ('127.0.0.1', 59400)
-2024-04-03 01:46:36,078 - INFO - Bank has authenticated the customer
-2024-04-03 01:46:36,078 - INFO - Master Key Received: b'\x95K\x1c\xe8}aM\xe5\xc6\xa1\x88\xf6\x04\x0f\xcf\x10'
-2024-04-03 01:46:38,548 - INFO - Qhz xvhu uhjlvwhuhg: 1
-2024-04-03 01:46:40,177 - INFO - Xvhu orjjhg lq: 1
-2024-04-03 01:46:43,169 - INFO - 1 ghsrvlwhg $123.0
-2024-04-03 01:46:45,381 - INFO - 1 zlwkguhz $23.0
-2024-04-03 01:46:50,367 - INFO - Fxuuhqw edodqfh iru 1: $100.0
-2024-04-03 01:46:52,951 - INFO - Connection with ('127.0.0.1', 59400) closed.
-2024-04-03 01:46:52,957 - INFO - Connection from: ('127.0.0.1', 59410)
-2024-04-03 01:46:52,957 - INFO - Bank has authenticated the customer
-2024-04-03 01:46:52,958 - INFO - Master Key Received: b"\x8b\x12\xfb\x98\xd5\xad\x1b\x05<\xb1\xb6\xb5\xd0L\xa0'"
+2024-04-03 13:10:48,438 - INFO - Connection from: ('127.0.0.1', 50958)
+2024-04-03 13:11:05,793 - INFO - Qhz xvhu uhjlvwhuhg: folhqw
+2024-04-03 13:11:08,966 - INFO - Xvhu orjjhg lq: folhqw
+2024-04-03 13:11:16,261 - INFO - folhqw ghsrvlwhg $500.0
+2024-04-03 13:11:21,356 - INFO - folhqw zlwkguhz $200.0
+2024-04-03 13:11:23,830 - INFO - Fxuuhqw edodqfh iru folhqw: $300.0
+2024-04-03 13:11:26,815 - INFO - Connection with ('127.0.0.1', 50958) closed.
+2024-04-03 13:11:26,818 - INFO - Connection from: ('127.0.0.1', 50977)
+2024-04-03 13:11:28,305 - INFO - Connection with ('127.0.0.1', 50977) closed.
+2024-04-03 13:18:52,894 - INFO - Connection from: ('127.0.0.1', 51172)
+2024-04-03 13:18:55,831 - INFO - Connection from: ('127.0.0.1', 51173)
+2024-04-03 13:18:59,333 - INFO - Connection from: ('127.0.0.1', 51174)
+2024-04-03 13:19:16,721 - INFO - Qhz xvhu uhjlvwhuhg: folhqw1
+2024-04-03 13:19:22,121 - INFO - Xvhu orjjhg lq: folhqw1
+2024-04-03 13:19:36,709 - INFO - Qhz xvhu uhjlvwhuhg: folhqw2
+2024-04-03 13:19:39,434 - INFO - Xvhu orjjhg lq: folhqw2
+2024-04-03 13:19:52,552 - INFO - Connection with ('127.0.0.1', 51173) closed.
+2024-04-03 13:19:59,577 - INFO - folhqw1 ghsrvlwhg $500.0
+2024-04-03 13:20:06,466 - INFO - folhqw1 zlwkguhz $200.0
+2024-04-03 13:20:09,464 - INFO - Fxuuhqw edodqfh iru folhqw1: $300.0
+2024-04-03 13:20:16,412 - INFO - folhqw2 ghsrvlwhg $400.0
+2024-04-03 13:20:20,624 - INFO - folhqw2 zlwkguhz $200.0
+2024-04-03 13:20:22,876 - INFO - Fxuuhqw edodqfh iru folhqw2: $200.0
