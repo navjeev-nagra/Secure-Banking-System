@@ -1,5 +1,5 @@
 import socket
-
+import logging
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
 #from Crypto.Cipher import PKCS1_OAEP
 #from Crypto.PublicKey import RSA
@@ -85,4 +85,15 @@ def derive_keys(master_key):
     return encryption_key, mac_key
 
 def createMasterKey():
-    return os.urandom(16)  
+    return os.urandom(16)
+
+# Basic Caesar Cipher implementation
+def caesar_cipher(text, shift):
+    result = ""
+    for char in text:
+        if char.isalpha():
+            offset = 65 if char.isupper() else 97
+            result += chr((ord(char) - offset + shift) % 26 + offset)
+        else:
+            result += char
+    return result

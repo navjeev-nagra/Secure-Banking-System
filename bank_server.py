@@ -10,6 +10,19 @@ sharedKey = bytearray(b'harkiratJASDEEPnavjeev')
 user_credentials = {}
 user_balances = {}
 
+def encrypted_log(message, level=logging.INFO):
+    shift=3
+    # Apply the Caesar cipher to the message
+    encrypted_message = caesar_cipher(message, shift)
+    
+    # Determine the logging level and call the appropriate logging function
+    if level == logging.INFO:
+        logging.info(encrypted_message)
+    elif level == logging.WARNING:
+        logging.warning(encrypted_message)
+    elif level == logging.ERROR:
+        logging.error(encrypted_message)
+
 def authenticate_connection(conn):
     bankNonce = os.urandom(16)
     
@@ -146,21 +159,21 @@ def handle_client(conn, address):
 def handle_registration(conn, username, password, encryption_key, mac_key):
     if username in user_credentials:
         message = "Username already exists."
-        logging.warning(f"Registration attempt with existing username: {username}")
+        encrypted_log(f"Registration attempt with existing username: {username}", level=logging.WARNING) 
     else:
         user_credentials[username] = password
         message = "Registration successful."
-        logging.info(f"New user registered: {username}")
+        encrypted_log(f"New user registered: {username}", level=logging.INFO) 
 
     send_encrypted_message_with_mac(conn, message, encryption_key, mac_key)
 
 def handle_login(conn, username, password, encryption_key, mac_key):
     if username in user_credentials and user_credentials[username] == password:
         message = "Login successful."
-        logging.info(f"User logged in: {username}")
+        encrypted_log(f"User logged in: {username}", level=logging.INFO)
     else:
         message = "Login failed."
-        logging.warning(f"Failed login attempt for username: {username}")
+        encrypted_log(f"Failed login attempt for username: {username}", level=logging.WARNING)
 
     send_encrypted_message_with_mac(conn, message, encryption_key, mac_key)
 
@@ -170,10 +183,10 @@ def handle_deposit(conn, username, amount, encryption_key, mac_key):
     if username in user_balances:
         user_balances[username] += amount
         message = "Deposit successful."
-        logging.info(f"{username} deposited ${amount}")
+        encrypted_log(f"{username} deposited ${amount}", level=logging.INFO)
     else:
         conn.send(b"Deposit failed.")
-        logging.warning(f"Failed deposit attempt for username: {username}")
+        encrypted_log(f"Failed deposit attempt for username: {username}", level=logging.WARNING)
 
     send_encrypted_message_with_mac(conn, message, encryption_key, mac_key)
 
@@ -183,10 +196,10 @@ def handle_withdrawal(conn, username, amount, encryption_key, mac_key):
     if username in user_balances and user_balances[username] >= amount:
         user_balances[username] -= amount
         message = "Withdrawal successful."
-        logging.info(f"{username} withdrew ${amount}")
+        encrypted_log(f"{username} withdrew ${amount}", level=logging.INFO)
     else:
         conn.send(b"Withdrawal failed.")
-        logging.warning(f"Failed withdrawal attempt for username: {username}")
+        encrypted_log(f"Failed withdrawal attempt for username: {username}", level=logging.WARNING)
 
     send_encrypted_message_with_mac(conn, message, encryption_key, mac_key)
 
@@ -194,10 +207,10 @@ def handle_withdrawal(conn, username, amount, encryption_key, mac_key):
 def handle_balance_inquiry(conn, username, amount, encryption_key, mac_key):
     if username in user_balances:
         message = f"Current balance: ${user_balances[username]}"
-        logging.info(f"Current balance for {username}: ${user_balances[username]}")
+        encrypted_log(f"Current balance for {username}: ${user_balances[username]}", level=logging.INFO)
     else:
         conn.send(b"Balance inquiry failed.")
-        logging.warning(f"Failed balance inquiry attempt for username: {username}")
+        encrypted_log(f"Failed balance inquiry attempt for username: {username}", level=logging.WARNING)
 
     send_encrypted_message_with_mac(conn, message, encryption_key, mac_key)
 
