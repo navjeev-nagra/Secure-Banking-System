@@ -8,9 +8,9 @@ from cryptography.hazmat.primitives.serialization import load_pem_public_key
 from cryptography.hazmat.primitives import hashes, hmac
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend
-from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad, unpad
-from Crypto.Random import get_random_bytes
+#from Crypto.Cipher import AES
+#from Crypto.Util.Padding import pad, unpad
+#from Crypto.Random import get_random_bytes
 import base64
 import os
 
@@ -70,7 +70,7 @@ def derive_keys(master_key):
     backend = default_backend()
     hkdf = HKDF(
         algorithm=hashes.SHA256(),
-        length=32,  # Generates 32 bytes: 16 for encryption, 16 for MAC
+        length=32,  
         salt=None,
         info=b'handshake data',
         backend=backend
@@ -78,7 +78,6 @@ def derive_keys(master_key):
 
     derived_key = hkdf.derive(master_key)
 
-    # Split the derived key into two parts: one for encryption, one for MAC
     encryption_key = derived_key[:16]
     mac_key = derived_key[16:]
 
@@ -87,7 +86,6 @@ def derive_keys(master_key):
 def createMasterKey():
     return os.urandom(16)
 
-# Basic Caesar Cipher implementation
 def caesar_cipher(text, shift):
     result = ""
     for char in text:

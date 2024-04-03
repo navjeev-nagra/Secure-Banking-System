@@ -30,7 +30,7 @@ class ClientApp:
         self.action_register = tk.Radiobutton(master, text="Register", variable=self.action_var, value="register")
 
         self.submit_button = tk.Button(master, text="Submit", command=self.submit_action)
-        self.reset_button = tk.Button(master, text="Reset", command=self.reset_form)  # Reset button
+        self.reset_button = tk.Button(master, text="Reset", command=self.reset_form)  
 
         self.username_label.grid(row=0, column=0)
         self.username_entry.grid(row=0, column=1)
@@ -110,10 +110,8 @@ class ClientApp:
                 self.bankSock.close()
                 self.bankSock = None
             
-        # Clear any client-side session data
         self.logged_in_user = None
             
-        # Clear the GUI and return to the login screen
         self.clear_gui()
         self.__init__(self.master)
 
@@ -128,19 +126,19 @@ class ClientApp:
             bankSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             bankSock.connect(('localhost', 5555))
             atmNonce = os.urandom(16)
-            print("ATM Nonce:", atmNonce)  # Debugging message
+            print("ATM Nonce:", atmNonce)  
             encryptedNonce = simpleEncrypt(atmNonce, self.sharedKey)
             bankSock.send(base64.b64encode(encryptedNonce))
 
             bankMessage = bankSock.recv(4096)
             bankMessage = base64.b64decode(bankMessage)
             bankMessage = simpleDecrypt(bankMessage, self.sharedKey)
-            print("Decrypted Bank Message:", bankMessage)  # Debugging message
+            print("Decrypted Bank Message:", bankMessage)  
             bankNonce = bankMessage.split(b'||')[0]
             receivedNonce = bankMessage.split(b'||')[1]
 
-            print("Received Bank Server Nonce:", bankNonce)  # Debugging message
-            print("Received ATM Nonce from Bank:", receivedNonce)  # Debugging message
+            print("Received Bank Server Nonce:", bankNonce)  
+            print("Received ATM Nonce from Bank:", receivedNonce)  
             if receivedNonce == atmNonce:
                 logging.info("Customer Has Authenticated Bank")
                 encryptedNonce = simpleEncrypt(bankNonce, key=self.sharedKey)
@@ -151,15 +149,13 @@ class ClientApp:
                 bankSock.send(base64.b64encode(masterKey))
                 logging.info(f"Shared Master Key to Bank: {self.masterKey}")
 
-                # Derive encryption and MAC keys from the Master Secret
-                self.encryption_key, self.mac_key = derive_keys(self.masterKey) # Returns two 16-byte keys
-                print("Encryption Key:", self.encryption_key)  # Debugging message
-                print("MAC Key:", self.mac_key)  # Debugging message
+                self.encryption_key, self.mac_key = derive_keys(self.masterKey) 
+                print("Encryption Key:", self.encryption_key)  
+                print("MAC Key:", self.mac_key)  
 
-                # Store the mac_key as an attribute
                 self.mac_key = self.mac_key
             else:
-                print("Received Nonce did not match ATM Nonce. Authentication failed.")  # Debugging message
+                print("Received Nonce did not match ATM Nonce. Authentication failed.")  
             return bankSock
         except Exception as e:
             messagebox.showerror("Connection Error", str(e))
@@ -172,35 +168,30 @@ class ClientApp:
     def communicate_with_server(self, action, username, password_or_amount):
         if self.bankSock:
             try:
-                # Prepare and send the encrypted message with MAC to the server
                 if action != 'logout':
                     message = f"{action}||{username}||{password_or_amount}"
-                    print("Sending message to server:", message)  # Debugging message
+                    print("Sending message to server:", message)  
                     mac = generate_mac(message.encode(), self.mac_key)
                     encrypted_message = customEncrypt(message + '||' + base64.b64encode(mac).decode(), self.encryption_key)
-                    print("Encrypted message:", encrypted_message)  # Debugging message
+                    print("Encrypted message:", encrypted_message)  
                     self.bankSock.sendall(encrypted_message)
 
-                    # Receive the encrypted response from the server
                     encrypted_response = self.bankSock.recv(4096)
-                    print("Received encrypted response from server:", encrypted_response)  # Debugging message
+                    print("Received encrypted response from server:", encrypted_response)  
 
                     if encrypted_response:
                         decrypted_response = customDecrypt(encrypted_response, self.encryption_key)
-                        print("Decrypted response:", decrypted_response)  # Debugging message
+                        print("Decrypted response:", decrypted_response)  
                         message_part, received_mac_encoded = decrypted_response.rsplit('||', 1)
                         received_mac = base64.b64decode(received_mac_encoded.encode())
 
-                        # Verify the MAC
                         if verify_mac(message_part.encode(), self.mac_key, received_mac):
-                            # If MAC is valid, show the message part in a messagebox
-                            print("MAC verified")  # Debugging message
+                            print("MAC verified") 
 
                             messagebox.showinfo("Response", message_part)
                             if action == "login" and "successful" in message_part:
                                 self.on_login_success(username)
                         else:
-                            # If MAC verification fails, show an error
                             messagebox.showerror("Error", "MAC verification failed.")
                     else:
                         messagebox.showerror("Error", "No encrypted response received from the server.")
